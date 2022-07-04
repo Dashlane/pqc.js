@@ -1,0 +1,33 @@
+main > .container {
+    padding: 60px 15px 0;
+}
+
+.btn-clipboard {
+    border: 1px solid;
+}
+
+.btn-clipboard:hover {
+    color: #0d6efd;
+}
+
+.function-form {
+    border: 1px solid #dee2e6;
+    margin: 0 -1.5rem 1rem;
+    border-radius: .375rem;
+}
+
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+    max-height: 405px;
+    overflow-y: auto;
+}
+
+.navbar-nav li:hover > ul.dropdown-menu {
+    display: block;
+}

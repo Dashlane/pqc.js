@@ -1,0 +1,9 @@
+.vscode
+.idea
+node_modules/
+dist/
+src/libsodium/
+src/PQClean/
+src/*asm.js
+src/*asm.wasm
+bundle/pqc*
