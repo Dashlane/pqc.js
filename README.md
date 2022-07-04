@@ -27,7 +27,7 @@ Pre-built bindings are available on [the playground](https://dashlane.github.io/
 - `sudo apt install emscripten`
 - `npm ci`
 - `make clean`
-- `make kem-$lt;the KEM algorithm you want to build$gt;` or `make sign-&lt;the signature algorithm you want to build&gt;`
+- `make kem-<the KEM algorithm you want to build>` or `make sign-<the signature algorithm you want to build>`
 - All bindings can be built using `make all`
 
 The output directory is `docs/bin/` and each output binding is made of a JS module and its associated WebAssembly file,
