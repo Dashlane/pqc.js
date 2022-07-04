@@ -12,7 +12,7 @@
     "asm.js",
     "webassembly"
   ],
-  "license": "ISC",
+  "license": "Apache-2.0",
   "author": "Jérôme Boillot <jerome.boillot@dashlane.com, me@jerome-boillot.com>",
   "main": "dist/kem.js",
   "types": "dist/kem.d.ts",
