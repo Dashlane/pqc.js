@@ -77,7 +77,7 @@ If it is set to false, the fallback JavaScript may still be used if the WebAssem
 
 ### Change the path of the WebAssembly
 
-The second optional parameter of the builders is the path of the WebAssembly file.
+The second optional parameter of the builders is the path to the WebAssembly file.
 
 ## Implementation notes
 
