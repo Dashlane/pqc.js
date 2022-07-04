@@ -16,11 +16,11 @@ This project has been inspired by [ntru.js](https://github.com/cyph/ntru.js) tha
 
 ## Playground
 
-It is possible to test the bindings, to compare them in real-world conditions on [this playground](docs/index.html).
+It is possible to test the bindings, to compare them in real-world conditions on [this playground](https://dashlane.github.io/pqc.js/).
 
 ## How to download pre-built bindings and NPM packages
 
-Pre-built bindings are available on [the playground](docs/index.html).
+Pre-built bindings are available on [the playground](https://dashlane.github.io/pqc.js/).
 
 ## How to build
 
