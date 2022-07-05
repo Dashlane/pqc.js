@@ -1,5 +1,5 @@
 {
-  "name": "pqc.js",
+  "name": "@dashlane/pqc.js",
   "version": "1.0.0",
   "description": "JavaScript wrapper generator of WebAssembly builds of each round-3 finalists of NIST Post-Quantum Cryptography Competition",
   "repository": {

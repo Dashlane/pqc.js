@@ -19,7 +19,7 @@ kem-$1:
 	mkdir package
 	mkdir -p package/dist
 	cp package.json README.md package/
-	sed -i "s/\"name\": \"pqc.js\",/\"name\": \"pqc-kem-$1-browser\",/" package/package.json
+	sed -i "s/\"name\": \"@dashlane\/pqc.js\",/\"name\": \"@dashlane\/pqc-kem-$1-browser\",/" package/package.json
 	sed -i "s/\"main\": \"dist\/kem.js\",/\"main\": \"dist\/pqc-kem-$1.js\",/" package/package.json
 	cp bundle/pqc-kem-$1.* package/dist/
 	cp dist/kem.d.ts package/dist/
@@ -27,7 +27,7 @@ kem-$1:
 	rm package/dist/pqc-kem-$1.*
 	cp dist/kem.js dist/kem.asm.js dist/kem.wasm.js dist/kem.wasm.wasm package/dist/
 	cp package.json package/
-	sed -i "s/\"name\": \"pqc.js\",/\"name\": \"pqc-kem-$1-node\",/" package/package.json
+	sed -i "s/\"name\": \"@dashlane\/pqc.js\",/\"name\": \"@dashlane\/pqc-kem-$1-node\",/" package/package.json
 	tar zcf docs/bin/pqc-kem-$1/pqc-kem-$1-node.tgz package/
 	rm -r package/
 endef
@@ -51,7 +51,7 @@ sign-$1:
 	mkdir package
 	mkdir -p package/dist
 	cp package.json README.md package/
-	sed -i "s/\"name\": \"pqc.js\",/\"name\": \"pqc-sign-$1-browser\",/" package/package.json
+	sed -i "s/\"name\": \"@dashlane\/pqc.js\",/\"name\": \"@dashlane\/pqc-sign-$1-browser\",/" package/package.json
 	sed -i "s/\"main\": \"dist\/kem.js\",/\"main\": \"dist\/pqc-sign-$1.js\",/" package/package.json
 	sed -i "s/\"types\": \"dist\/kem.d.ts\",/\"types\": \"dist\/sign.d.ts\",/" package/package.json
 	cp bundle/pqc-sign-$1.* package/dist/
@@ -61,7 +61,7 @@ sign-$1:
 	rm package/dist/pqc-sign-$1.*
 	cp dist/sign.js dist/sign.asm.js dist/sign.wasm.js dist/sign.wasm.wasm package/dist/
 	cp package.json package/
-	sed -i "s/\"name\": \"pqc.js\",/\"name\": \"pqc-sign-$1-node\",/" package/package.json
+	sed -i "s/\"name\": \"@dashlane\/pqc.js\",/\"name\": \"@dashlane\/pqc-sign-$1-node\",/" package/package.json
 	sed -i "s/\"main\": \"dist\/kem.js\",/\"main\": \"dist\/sign.js\",/" package/package.json
 	sed -i "s/\"types\": \"dist\/kem.d.ts\",/\"types\": \"dist\/sign.d.ts\",/" package/package.json
 	tar zcf docs/bin/pqc-sign-$1/pqc-sign-$1-node.tgz package/
