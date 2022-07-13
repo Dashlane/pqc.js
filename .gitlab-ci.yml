@@ -1,5 +1,21 @@
 image: $CI_REGISTRY/server/server-node-docker/node-docker-ci-16:latest
 
+.base_job:
+  interruptible: true
+  variables:
+    VAULT_SERVER_URL: https://auth.dashlane.com:8200/
+
+.base_protected_job:
+  extends: .base_job
+  variables:
+    VAULT_AUTH_ROLE: ci_server_prod
+  tags:
+    - protected
+  only:
+    refs:
+      - master
+      - /^v.*$/
+
 stages:
   - deploy
 
@@ -19,9 +35,15 @@ pages:
 
 # Publication of some bindings on NPM
 npm_publish:
+  extends: .base_protected_job
   stage: deploy
+  secrets:
+    NPM_TOKEN_FILE:
+      vault: ci/server/global/prod/npm/npm_token@kv
+  interruptible: false
   script:
-    - npm config set -- '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+    - export NPM_TOKEN="$(cat ${NPM_TOKEN_FILE})"
+    - npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
     - ./npmPublish.sh
   rules:
     - if: $CI_COMMIT_TAG
