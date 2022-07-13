@@ -22,11 +22,11 @@ export interface SIGN {
     }>;
     sign: (
         message: Uint8Array,
-        publicKey: Uint8Array
+        privateKey: Uint8Array
     ) => Promise<{
         signature: Uint8Array;
     }>;
-    verify: (signature: Uint8Array, message: Uint8Array, privateKey: Uint8Array) => Promise<boolean>;
+    verify: (signature: Uint8Array, message: Uint8Array, publicKey: Uint8Array) => Promise<boolean>;
 }
 
 async function signBuilder(useFallback = false, wasmFilePath: string | undefined = undefined): Promise<SIGN> {

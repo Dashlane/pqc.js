@@ -1,3 +1,9 @@
+image: $CI_REGISTRY/server/server-node-docker/node-docker-ci-16:latest
+
+stages:
+  - deploy
+
+# Playground deployment
 pages:
   stage: deploy
   script:
@@ -7,5 +13,15 @@ pages:
   artifacts:
     paths:
       - public
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+
+# Publication of some bindings on NPM
+npm_publish:
+  stage: deploy
+  script:
+    - npm config set -- '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+    - ./npmPublish.sh
+  rules:
+    - if: $CI_COMMIT_TAG

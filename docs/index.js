@@ -386,7 +386,7 @@ async function displaySIGN(signName) {
 <a class="btn btn-outline-primary" role="button" href="./bin/pqc-sign-${signName}/pqc-sign-${signName}-browser.tgz" download="" target="_blank">
     Download browser package
 </a>
-<a class="btn btn-outline-primary" role="button" href="./bin/pqc-sign-${signName}/pqc-sign-${signName}-node.js" download="" target="_blank">
+<a class="btn btn-outline-primary" role="button" href="./bin/pqc-sign-${signName}/pqc-sign-${signName}-node.tgz" download="" target="_blank">
     Download node package
 </a>
 
