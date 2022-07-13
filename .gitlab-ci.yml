@@ -13,7 +13,7 @@ image: $CI_REGISTRY/server/server-node-docker/node-docker-ci-16:latest
     - protected
   only:
     refs:
-      - master
+      - main
       - /^v.*$/
 
 stages:
