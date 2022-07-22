@@ -22,6 +22,38 @@ It is possible to test the bindings, to compare them in real-world conditions on
 
 Pre-built bindings are available on [the playground](https://dashlane.github.io/pqc.js/).
 
+Some bindings can directly be downloaded from [npmjs.com](https://npmjs.com):
+
+CRYSTALS-Kyber:
+```
+npm install @dashlane/pqc-kem-kyber<512|768|1024>-<node|browser>
+```
+
+NTRU-HPS:
+```
+npm install @dashlane/pqc-kem-ntruhps<2048509|2048677|4096821>-<node|browser>
+```
+
+NTRU Prime:
+```
+npm install @dashlane/pqc-kem-ntrulpr<653|761|857>-<node|browser>
+```
+
+SABER:
+```
+npm install @dashlane/pqc-kem-<light||fire>saber-<node|browser>
+```
+
+CRYSTALS-Dilithium:
+```
+npm install @dashlane/pqc-sign-dilithium<2|3|5>-<node|browser>
+```
+
+Falcon:
+```
+npm install @dashlane/pqc-sign-falcon-<512|1024>-<node|browser>
+```
+
 ## How to build
 
 - `sudo apt install emscripten`
