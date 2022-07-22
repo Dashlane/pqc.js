@@ -22,7 +22,7 @@ It is possible to test the bindings, to compare them in real-world conditions on
 
 Pre-built bindings are available on [the playground](https://dashlane.github.io/pqc.js/).
 
-Some bindings can directly be downloaded from [https://npmjs.com](npmjs.com):
+Some bindings can directly be downloaded from [npmjs.com](https://npmjs.com):
 
 CRYSTALS-Kyber:
 ```
