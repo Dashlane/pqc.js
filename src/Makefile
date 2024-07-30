@@ -6,7 +6,6 @@ kem_name_uppercase = $(shell echo $(kem_name_without_dashes) | tr [:lower:] [:up
 kem: dependencies
 	bash -c ' \
 			args="$$(echo " \
-				--memory-init-file 0 \
 				--no-entry `# No main function` \
 				-DKEM_NAME=$(kem_name) \
 				-DKEM_NAME_UPPERCASE=$(kem_name_uppercase) \
@@ -23,7 +22,7 @@ kem: dependencies
 				-s ALIASING_FUNCTION_POINTERS=1 \
 				-s DISABLE_EXCEPTION_CATCHING=1 \
 				-s FILESYSTEM=0 \
-				-s INVOKE_RUN=false \
+				-s INVOKE_RUN=0 \
 				-s ASYNCIFY `# Allow usage of async functions in JS included in C code` \
 				-s ASYNCIFY_IGNORE_INDIRECT `# Async JS functions are not called through pointers` \
 				-IPQClean/crypto_kem/$(kem_name) -IPQClean/common -I. \
@@ -54,7 +53,7 @@ kem: dependencies
 			\
 			bash -c "emcc -Oz -s WASM=0 -s SINGLE_FILE=1 $$args -o kem.asm.js" && \
 			bash -c "emcc -O3 -s WASM=1 $$args -o kem.wasm.js" && \
-			sed -i "s/fs.readFileSync(filename/fs.readFileSync(new URL(filename)/g" kem.wasm.js \
+			sed -i "" "s/fs.readFileSync(filename/fs.readFileSync(new URL(filename)/g" kem.wasm.js \
 	'
 
 sign_name ?= dilithium5
@@ -68,7 +67,6 @@ sphincs_option = $(shell bash -c "[[ $(sign_name) == sphincs-sha256* ]] || echo 
 sign: dependencies
 	bash -c ' \
 			args="$$(echo " \
-				--memory-init-file 0 \
 				--no-entry `# No main function` \
 				-DSIGN_NAME=$(sign_name) \
 				-DSIGN_NAME_UPPERCASE=$(sign_name_uppercase) \
@@ -85,7 +83,7 @@ sign: dependencies
 				-s ALIASING_FUNCTION_POINTERS=1 \
 				-s DISABLE_EXCEPTION_CATCHING=1 \
 				-s FILESYSTEM=0 \
-				-s INVOKE_RUN=false \
+				-s INVOKE_RUN=0 \
 				-s ASYNCIFY `# Allow usage of async functions in JS included in C code` \
 				$(sphincs_option) \
 				-IPQClean/crypto_sign/$(sign_name) -IPQClean/common -I. \
@@ -115,13 +113,12 @@ sign: dependencies
 			\
 			bash -c "emcc -Oz -s WASM=0 -s SINGLE_FILE=1 $$args -o sign.asm.js" && \
 			bash -c "emcc -O3 -s WASM=1 $$args -o sign.wasm.js" && \
-			sed -i "s/fs.readFileSync(filename/fs.readFileSync(new URL(filename)/g" sign.wasm.js \
+			sed -i "" "s/fs.readFileSync(filename/fs.readFileSync(new URL(filename)/g" sign.wasm.js \
 	'
 
 primitives_tests: dependencies
 	bash -c ' \
 			args="$$(echo " \
-				--memory-init-file 0 \
 				--no-entry `# No main function` \
 				-DCONFIGURED=1 `# Hide libsodium warnings with direct calls` \
 				-s DYNAMIC_EXECUTION=0 `# Avoid usage of eval for WASM` \
@@ -135,7 +132,7 @@ primitives_tests: dependencies
 				-s ALIASING_FUNCTION_POINTERS=1 \
 				-s DISABLE_EXCEPTION_CATCHING=0 \
 				-s FILESYSTEM=0 \
-				-s INVOKE_RUN=false \
+				-s INVOKE_RUN=0 \
 				-s ASYNCIFY `# Allow usage of async functions in JS included in C code` \
 				-s ASYNCIFY_IGNORE_INDIRECT `# Async JS functions are not called through pointers` \
 				-IPQClean/common -I. \
@@ -160,7 +157,7 @@ dependencies:
 	if [ ! -d "PQClean" ]; then \
   		git clone -q --depth 1 https://github.com/PQClean/PQClean && \
   		rm PQClean/common/randombytes.* && rm PQClean/common/aes.* && \
-  		sed -ri "s/( sha[0-9]{3})\(/\1_deprecated(/g" PQClean/common/sha2.c; \
+  		sed -ri "" "s/( sha[0-9]{3})\(/\1_deprecated(/g" PQClean/common/sha2.c; \
 	fi
 	# About the need to declare a new package in libsodium https://github.com/emscripten-core/emscripten/issues/13551
 	if [ ! -d "libsodium" ]; then \

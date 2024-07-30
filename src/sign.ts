@@ -1,6 +1,6 @@
 import { SIGN_C, Pointer } from './types/sign_c_binding';
-import * as createWASMSIGNNativeCaller from './sign.wasm.js';
-import * as createJSSIGNNativeCaller from './sign.asm.js';
+import createWASMSIGNNativeCaller from './sign.wasm.js';
+import createJSSIGNNativeCaller from './sign.asm.js';
 
 // https://github.com/emscripten-core/emscripten/issues/11792#issuecomment-877120580
 /* nodeblock:start */
@@ -9,12 +9,14 @@ import { createRequire } from 'module';
 globalThis.__dirname = dirname(import.meta.url);
 globalThis.require = createRequire(import.meta.url);
 /* nodeblock:end */
-{} // So the comment above is not dropped during transpilation
+// eslint-disable-next-line no-empty
+{
+} // So the comment above is not dropped during transpilation
 
 export interface SIGN {
-    publicKeyBytes: Promise<number>;
-    privateKeyBytes: Promise<number>;
-    signatureBytes: Promise<number>;
+    publicKeyBytes: number;
+    privateKeyBytes: number;
+    signatureBytes: number;
 
     keypair: () => Promise<{
         publicKey: Uint8Array;
@@ -35,17 +37,20 @@ async function signBuilder(useFallback = false, wasmFilePath: string | undefined
     if (wasmFilePath) {
         Module.locateFile = () => {
             return wasmFilePath;
-        }
+        };
     }
 
     if (useFallback) {
-        Module = (await createJSSIGNNativeCaller.default(Module)) as unknown as SIGN_C;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        Module = (await createJSSIGNNativeCaller(Module)) as unknown as SIGN_C;
     } else {
         try {
-            Module = (await createWASMSIGNNativeCaller.default(Module)) as unknown as SIGN_C;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            Module = (await createWASMSIGNNativeCaller(Module)) as unknown as SIGN_C;
         } catch (err) {
             console.log('Failed to initialize SIGN WASM, using fallback instead');
-            Module = (await createJSSIGNNativeCaller.default(Module)) as unknown as SIGN_C;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            Module = (await createJSSIGNNativeCaller(Module)) as unknown as SIGN_C;
         }
     }
 
@@ -61,9 +66,9 @@ async function signBuilder(useFallback = false, wasmFilePath: string | undefined
         randomValueNodeJS();
         Module.getRandomValue = randomValueNodeJS;
 
-        // @ts-ignore
         const { subtle } = crypto.webcrypto;
-        Module.subtleCrypto = subtle;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        Module.subtleCrypto = subtle as any;
     }
     /* nodeblock:end */
 
@@ -93,113 +98,102 @@ async function signBuilder(useFallback = false, wasmFilePath: string | undefined
         }
     }
 
-    let publicKeyBytes: number, privateKeyBytes: number, signatureBytes: number;
+    Module._sign_init();
 
-    const initiated: Promise<void> = Module.ready.then(() => {
-        Module._sign_init();
-
-        publicKeyBytes = Module._sign_public_key_bytes();
-        privateKeyBytes = Module._sign_private_key_bytes();
-        signatureBytes = Module._sign_signature_bytes();
-    });
+    const publicKeyBytes = Module._sign_public_key_bytes();
+    const privateKeyBytes = Module._sign_private_key_bytes();
+    const signatureBytes = Module._sign_signature_bytes();
 
     return {
-        publicKeyBytes: initiated.then(() => {
-            return publicKeyBytes;
-        }),
-        privateKeyBytes: initiated.then(() => {
-            return privateKeyBytes;
-        }),
-        signatureBytes: initiated.then(() => {
-            return signatureBytes;
-        }),
-
+        publicKeyBytes,
+        privateKeyBytes,
+        signatureBytes,
         keypair: async () => {
             const release = await bindingCallerMutex.lock();
-            return initiated.then(async () => {
-                const publicKeyBuffer = Module._malloc(publicKeyBytes);
-                const privateKeyBuffer = Module._malloc(privateKeyBytes);
 
-                try {
-                    const returnValue = await Module.ccall(
-                        'sign_keypair',
-                        'number',
-                        ['number', 'number'],
-                        [publicKeyBuffer, privateKeyBuffer],
-                        { async: true }
-                    );
-                    return dataReturn(returnValue, {
-                        publicKey: dataResult(publicKeyBuffer, publicKeyBytes),
-                        privateKey: dataResult(privateKeyBuffer, privateKeyBytes),
-                    });
-                } finally {
-                    release();
-                    dataFree(publicKeyBuffer);
-                    dataFree(privateKeyBuffer);
-                }
-            });
+            const publicKeyBuffer = Module._malloc(publicKeyBytes);
+            const privateKeyBuffer = Module._malloc(privateKeyBytes);
+
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const returnValue: number = await Module.ccall(
+                    'sign_keypair',
+                    'number',
+                    ['number', 'number'],
+                    [publicKeyBuffer, privateKeyBuffer],
+                    { async: true }
+                );
+                return dataReturn(returnValue, {
+                    publicKey: dataResult(publicKeyBuffer, publicKeyBytes),
+                    privateKey: dataResult(privateKeyBuffer, privateKeyBytes),
+                });
+            } finally {
+                release();
+                dataFree(publicKeyBuffer);
+                dataFree(privateKeyBuffer);
+            }
         },
 
         sign: async (message, privateKey) => {
             const release = await bindingCallerMutex.lock();
-            return initiated.then(async () => {
-                const signatureBuffer = Module._malloc(signatureBytes);
-                const signatureLengthBuffer = Module._malloc(8);
-                const messageBuffer = Module._malloc(message.length);
-                const privateKeyBuffer = Module._malloc(privateKeyBytes);
 
-                Module.writeArrayToMemory(message, messageBuffer);
-                Module.writeArrayToMemory(privateKey, privateKeyBuffer);
+            const signatureBuffer = Module._malloc(signatureBytes);
+            const signatureLengthBuffer = Module._malloc(8);
+            const messageBuffer = Module._malloc(message.length);
+            const privateKeyBuffer = Module._malloc(privateKeyBytes);
 
-                try {
-                    const returnValue = await Module.ccall(
-                        'sign_signature',
-                        'number',
-                        ['number', 'number', 'number', 'number', 'number'],
-                        [signatureBuffer, signatureLengthBuffer, messageBuffer, message.byteLength, privateKeyBuffer],
-                        { async: true }
-                    );
-                    const realSignatureBytes = new Uint32Array(Module.HEAPU32.buffer, signatureLengthBuffer, 1)[0];
-                    return dataReturn(returnValue, {
-                        signature: dataResult(signatureBuffer, realSignatureBytes),
-                    });
-                } finally {
-                    release();
-                    dataFree(signatureBuffer);
-                    dataFree(signatureLengthBuffer);
-                    dataFree(messageBuffer);
-                    dataFree(privateKeyBuffer);
-                }
-            });
+            Module.writeArrayToMemory(message, messageBuffer);
+            Module.writeArrayToMemory(privateKey, privateKeyBuffer);
+
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const returnValue: number = await Module.ccall(
+                    'sign_signature',
+                    'number',
+                    ['number', 'number', 'number', 'number', 'number'],
+                    [signatureBuffer, signatureLengthBuffer, messageBuffer, message.byteLength, privateKeyBuffer],
+                    { async: true }
+                );
+                const realSignatureBytes = new Uint32Array(Module.HEAPU32.buffer, signatureLengthBuffer, 1)[0];
+                return dataReturn(returnValue, {
+                    signature: dataResult(signatureBuffer, realSignatureBytes),
+                });
+            } finally {
+                release();
+                dataFree(signatureBuffer);
+                dataFree(signatureLengthBuffer);
+                dataFree(messageBuffer);
+                dataFree(privateKeyBuffer);
+            }
         },
 
         verify: async (signature, message, publicKey) => {
             const release = await bindingCallerMutex.lock();
-            return initiated.then(async () => {
-                const signatureBuffer = Module._malloc(signature.length);
-                const messageBuffer = Module._malloc(message.length);
-                const publicKeyBuffer = Module._malloc(publicKeyBytes);
 
-                Module.writeArrayToMemory(signature, signatureBuffer);
-                Module.writeArrayToMemory(message, messageBuffer);
-                Module.writeArrayToMemory(publicKey, publicKeyBuffer);
+            const signatureBuffer = Module._malloc(signature.length);
+            const messageBuffer = Module._malloc(message.length);
+            const publicKeyBuffer = Module._malloc(publicKeyBytes);
 
-                try {
-                    const returnValue = await Module.ccall(
-                        'sign_verify',
-                        'number',
-                        ['number', 'number', 'number', 'number', 'number'],
-                        [signatureBuffer, signature.byteLength, messageBuffer, message.byteLength, publicKeyBuffer],
-                        { async: true }
-                    );
-                    return returnValue === 0;
-                } finally {
-                    release();
-                    dataFree(signatureBuffer);
-                    dataFree(messageBuffer);
-                    dataFree(publicKeyBuffer);
-                }
-            });
+            Module.writeArrayToMemory(signature, signatureBuffer);
+            Module.writeArrayToMemory(message, messageBuffer);
+            Module.writeArrayToMemory(publicKey, publicKeyBuffer);
+
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const returnValue: number = await Module.ccall(
+                    'sign_verify',
+                    'number',
+                    ['number', 'number', 'number', 'number', 'number'],
+                    [signatureBuffer, signature.byteLength, messageBuffer, message.byteLength, publicKeyBuffer],
+                    { async: true }
+                );
+                return returnValue === 0;
+            } finally {
+                release();
+                dataFree(signatureBuffer);
+                dataFree(messageBuffer);
+                dataFree(publicKeyBuffer);
+            }
         },
     };
 }
@@ -214,7 +208,7 @@ class Mutex {
 
     lock() {
         let _resolve: () => void;
-        const p = new Promise<void>(resolve => {
+        const p = new Promise<void>((resolve) => {
             _resolve = () => resolve();
         });
         const rv = this.current.then(() => _resolve);
