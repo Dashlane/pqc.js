@@ -5,7 +5,7 @@ primitives:
 	npm run build && \
 	npm run test:primitives
 
-KEM := firesaber frodokem1344aes frodokem1344shake frodokem640aes frodokem640shake frodokem976aes frodokem976shake hqc-rmrs-128 hqc-rmrs-192 hqc-rmrs-256 kyber1024 kyber1024-90s kyber512 kyber512-90s kyber768 kyber768-90s lightsaber mceliece348864 mceliece348864f mceliece460896 mceliece460896f mceliece6688128 mceliece6688128f mceliece6960119 mceliece6960119f mceliece8192128 mceliece8192128f ntruhps2048509 ntruhps2048677 ntruhps40961229 ntruhps4096821 ntruhrss1373 ntruhrss701 ntrulpr1013 ntrulpr1277 ntrulpr653 ntrulpr761 ntrulpr857 ntrulpr953 saber sntrup1013 sntrup1277 sntrup653 sntrup761 sntrup857 sntrup953
+KEM := hqc-128 hqc-192 hqc-256 kyber1024 kyber512 kyber768 mceliece348864 mceliece348864f mceliece460896 mceliece460896f mceliece6688128 mceliece6688128f mceliece6960119 mceliece6960119f mceliece8192128 mceliece8192128f
 
 define make-kem-target
 kem-$1:
@@ -37,7 +37,7 @@ $(foreach element,$(KEM),$(eval $(call make-kem-target,$(element))))
 all_kem: $(foreach element,$(KEM),kem-$(element))
 
 
-SIGN := dilithium2 dilithium2aes dilithium3 dilithium3aes dilithium5 dilithium5aes falcon-1024 falcon-512 rainbowI-circumzenithal rainbowI-classic rainbowI-compressed rainbowIII-circumzenithal rainbowIII-classic rainbowIII-compressed rainbowV-circumzenithal rainbowV-classic rainbowV-compressed sphincs-haraka-128f-robust sphincs-haraka-128f-simple sphincs-haraka-128s-robust sphincs-haraka-128s-simple sphincs-haraka-192f-robust sphincs-haraka-192f-simple sphincs-haraka-192s-robust sphincs-haraka-192s-simple sphincs-haraka-256f-robust sphincs-haraka-256f-simple sphincs-haraka-256s-robust sphincs-haraka-256s-simple sphincs-sha256-128f-robust sphincs-sha256-128f-simple sphincs-sha256-128s-robust sphincs-sha256-128s-simple sphincs-sha256-192f-robust sphincs-sha256-192f-simple sphincs-sha256-192s-robust sphincs-sha256-192s-simple sphincs-sha256-256f-robust sphincs-sha256-256f-simple sphincs-sha256-256s-robust sphincs-sha256-256s-simple sphincs-shake256-128f-robust sphincs-shake256-128f-simple sphincs-shake256-128s-robust sphincs-shake256-128s-simple sphincs-shake256-192f-robust sphincs-shake256-192f-simple sphincs-shake256-192s-robust sphincs-shake256-192s-simple sphincs-shake256-256f-robust sphincs-shake256-256f-simple sphincs-shake256-256s-robust sphincs-shake256-256s-simple
+SIGN := dilithium2 dilithium3 dilithium5 falcon-1024 falcon-512 falcon-padded-1024 falcon-padded-512 sphincs-sha2-128f-simple sphincs-sha2-128s-simple sphincs-sha2-192f-simple sphincs-sha2-192s-simple sphincs-sha2-256f-simple sphincs-sha2-256s-simple sphincs-shake-128f-simple sphincs-shake-128s-simple sphincs-shake-192f-simple sphincs-shake-192s-simple sphincs-shake-256f-simple sphincs-shake-256s-simple
 
 define make-sign-target
 sign-$1:

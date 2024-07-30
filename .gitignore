@@ -6,4 +6,5 @@ src/libsodium/
 src/PQClean/
 src/*asm.js
 src/*asm.wasm
-bundle/pqc*
+bundle/*
+!bundle/*.babel.js
