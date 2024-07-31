@@ -36,23 +36,23 @@ module.exports = (env) => {
                     }]
                 },
                 {
-                    loader: 'string-replace-loader',
-                    options: {
-                        search: 'import.meta.url',
-                        replace: '\'\''
-                    }
+                    test: /\.js$/,
+                    use: [{
+                        loader: 'string-replace-loader',
+                        options: {
+                            search: 'import.meta.url',
+                            replace: '\'\''
+                        }
+                    }, {
+                        loader: 'string-replace-loader',
+                        options: {
+                            search: 'document.baseURI',
+                            replace: 'undefined'
+                        }
+                    }]
                 },
-                {
-                    loader: 'string-replace-loader',
-                    options: {
-                        search: 'document.baseURI',
-                        replace: 'undefined'
-                    }
-                },
-                // Default WebAssembly loader cannot be used https://github.com/webpack/webpack/issues/15566
                 {
                     test: /\.wasm$/,
-                    // Force using legacy assets loader https://github.com/webpack/webpack/issues/6725
                     type: 'javascript/auto',
                     loader: 'file-loader',
                     options: {
@@ -62,5 +62,16 @@ module.exports = (env) => {
                 },
             ],
         },
+        resolve: {
+            fallback: {
+                "module": false, // Explicitly handle `module` resolution
+                "fs": false,
+                "path": false,
+            },
+            extensions: ['.js', '.json', '.wasm'],  // Ensure webpack resolves these extensions
+        },
+        stats: {
+            errorDetails: true
+        }
     };
 };

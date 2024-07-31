@@ -1,7 +1,7 @@
 import { PrimitivesTests } from './types/primitives_tests';
 import { PrimitivesTests_C } from './types/primitives_tests_c_binding';
-import * as createWASMPrimitivesTestsCaller from './primitives_tests.wasm.js'
-import * as createJSPrimitivesTestsCaller from './primitives_tests.asm.js'
+import createWASMPrimitivesTestsCaller from './primitives_tests.wasm.js';
+import createJSPrimitivesTestsCaller from './primitives_tests.asm.js';
 
 // https://github.com/emscripten-core/emscripten/issues/11792#issuecomment-877120580
 /* nodeblock:start */
@@ -14,9 +14,12 @@ globalThis.require = createRequire(import.meta.url);
 async function primitivesTests(useFallback = false): Promise<PrimitivesTests> {
     let Module: PrimitivesTests_C;
     if (useFallback) {
-        Module = (await createJSPrimitivesTestsCaller.default()) as unknown as PrimitivesTests_C;
+        Module = (await createJSPrimitivesTestsCaller()) as unknown as PrimitivesTests_C;
+        console.log('Using asm.js');
     } else {
-        Module = (await createWASMPrimitivesTestsCaller.default()) as unknown as PrimitivesTests_C;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        Module = (await createWASMPrimitivesTestsCaller()) as unknown as PrimitivesTests_C;
+        console.log('Using WASM');
     }
 
     // This block is only needed when running on Node.js to avoid usage of `require` in libsodium
@@ -31,9 +34,9 @@ async function primitivesTests(useFallback = false): Promise<PrimitivesTests> {
         randomValueNodeJS();
         Module.getRandomValue = randomValueNodeJS;
 
-        // @ts-ignore
         const { subtle } = crypto.webcrypto;
-        Module.subtleCrypto = subtle;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        Module.subtleCrypto = subtle as any;
     }
     /* nodeblock:end */
 
@@ -41,18 +44,8 @@ async function primitivesTests(useFallback = false): Promise<PrimitivesTests> {
         Module.subtleCrypto = window.crypto.subtle;
     }
 
-    const initiated: Promise<void> = Module.ready;
-
     return {
-        run_tests: () => initiated.then(() => {
-            return Module.ccall(
-                'run_tests',
-                'number',
-                [],
-                [],
-                { async: true }
-            );
-        })
+        run_tests: () => Module.ccall('run_tests', 'number', [], [], { async: true }),
     };
 }
 

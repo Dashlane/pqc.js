@@ -5,14 +5,13 @@ import signBuilder from './sign.js';
 import primitivesTests from './primitives_tests.js';
 
 describe('KEM tests', () => {
-
     it('All buffer lengths are valid and shared secret is effectively shared', async () => {
         const kem = await kemBuilder();
 
-        const publicKeyBytes = await kem.publicKeyBytes;
-        const privateKeyBytes = await kem.privateKeyBytes;
-        const ciphertextBytes = await kem.ciphertextBytes;
-        const sharedSecretBytes = await kem.sharedSecretBytes;
+        const publicKeyBytes = kem.publicKeyBytes;
+        const privateKeyBytes = kem.privateKeyBytes;
+        const ciphertextBytes = kem.ciphertextBytes;
+        const sharedSecretBytes = kem.sharedSecretBytes;
 
         console.log(`Public key length: ${publicKeyBytes} bytes`);
         console.log(`Private key length: ${privateKeyBytes} bytes`);
@@ -38,9 +37,9 @@ describe('SIGN tests', () => {
     it('All buffer lengths are valid and generated signature is valid', async () => {
         const sign = await signBuilder();
 
-        const publicKeyBytes = await sign.publicKeyBytes;
-        const privateKeyBytes = await sign.privateKeyBytes;
-        const signatureBytes = await sign.signatureBytes;
+        const publicKeyBytes = sign.publicKeyBytes;
+        const privateKeyBytes = sign.privateKeyBytes;
+        const signatureBytes = sign.signatureBytes;
 
         console.log(`Public key length: ${publicKeyBytes} bytes`);
         console.log(`Private key length: ${privateKeyBytes} bytes`);
@@ -62,11 +61,11 @@ describe('SIGN tests', () => {
 
 describe('PRIMITIVES tests', () => {
     it('Test all modified cryptographic primitive whose implementation have been changed to use WebCrypto', async () => {
-        const wasmPrimitivesTests = await primitivesTests(false)
-        expect(await wasmPrimitivesTests.run_tests()).eq(0, 'Errors during cryptographic primitives running in WASM')
+        const wasmPrimitivesTests = await primitivesTests(false);
+        expect(await wasmPrimitivesTests.run_tests()).eq(0, 'Errors during cryptographic primitives running in WASM');
 
-        const asmPrimitivesTests = await primitivesTests(true)
-        expect(await asmPrimitivesTests.run_tests()).eq(0, 'Errors during cryptographic primitives running in asm.js')
+        const asmPrimitivesTests = await primitivesTests(true);
+        expect(await asmPrimitivesTests.run_tests()).eq(0, 'Errors during cryptographic primitives running in asm.js');
     });
 });
 

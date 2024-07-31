@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { KEM_C, Pointer } from './types/kem_c_binding';
-import * as createWASMKEMNativeCaller from './kem.wasm.js';
-import * as createJSKEMNativeCaller from './kem.asm.js';
+import createWASMKEMNativeCaller from './kem.wasm.js';
+import createJSKEMNativeCaller from './kem.asm.js';
 
 // https://github.com/emscripten-core/emscripten/issues/11792#issuecomment-877120580
 /* nodeblock:start */
@@ -9,13 +10,15 @@ import { createRequire } from 'module';
 globalThis.__dirname = dirname(import.meta.url);
 globalThis.require = createRequire(import.meta.url);
 /* nodeblock:end */
-{} // So the comment above is not dropped during transpilation
+// eslint-disable-next-line no-empty
+{
+} // So the comment above is not dropped during transpilation
 
 export interface KEM {
-    publicKeyBytes: Promise<number>;
-    privateKeyBytes: Promise<number>;
-    ciphertextBytes: Promise<number>;
-    sharedSecretBytes: Promise<number>;
+    publicKeyBytes: number;
+    privateKeyBytes: number;
+    ciphertextBytes: number;
+    sharedSecretBytes: number;
 
     keypair: () => Promise<{
         publicKey: Uint8Array;
@@ -43,13 +46,16 @@ async function kemBuilder(useFallback = false, wasmFilePath: string | undefined 
     }
 
     if (useFallback) {
-        Module = (await createJSKEMNativeCaller.default(Module)) as unknown as KEM_C;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        Module = (await createJSKEMNativeCaller(Module)) as unknown as KEM_C;
     } else {
         try {
-            Module = (await createWASMKEMNativeCaller.default(Module)) as unknown as KEM_C;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            Module = (await createWASMKEMNativeCaller(Module)) as unknown as KEM_C;
         } catch (err) {
             console.error('Failed to initialize KEM WASM, using fallback instead', err);
-            Module = (await createJSKEMNativeCaller.default(Module)) as unknown as KEM_C;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            Module = (await createJSKEMNativeCaller(Module)) as unknown as KEM_C;
         }
     }
 
@@ -65,9 +71,9 @@ async function kemBuilder(useFallback = false, wasmFilePath: string | undefined 
         randomValueNodeJS();
         Module.getRandomValue = randomValueNodeJS;
 
-        // @ts-ignore
         const { subtle } = crypto.webcrypto;
-        Module.subtleCrypto = subtle;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        Module.subtleCrypto = subtle as any;
     }
     /* nodeblock:end */
 
@@ -97,115 +103,100 @@ async function kemBuilder(useFallback = false, wasmFilePath: string | undefined 
         }
     }
 
-    let publicKeyBytes: number, privateKeyBytes: number, ciphertextBytes: number, sharedSecretBytes: number;
+    Module._kem_init();
 
-    const initiated: Promise<void> = Module.ready.then(() => {
-        Module._kem_init();
-
-        publicKeyBytes = Module._kem_public_key_bytes();
-        privateKeyBytes = Module._kem_private_key_bytes();
-        ciphertextBytes = Module._kem_ciphertext_bytes();
-        sharedSecretBytes = Module._kem_shared_secret_bytes();
-    });
+    const publicKeyBytes = Module._kem_public_key_bytes();
+    const privateKeyBytes = Module._kem_private_key_bytes();
+    const ciphertextBytes = Module._kem_ciphertext_bytes();
+    const sharedSecretBytes = Module._kem_shared_secret_bytes();
 
     return {
-        publicKeyBytes: initiated.then(() => {
-            return publicKeyBytes;
-        }),
-        privateKeyBytes: initiated.then(() => {
-            return privateKeyBytes;
-        }),
-        ciphertextBytes: initiated.then(() => {
-            return ciphertextBytes;
-        }),
-        sharedSecretBytes: initiated.then(() => {
-            return sharedSecretBytes;
-        }),
+        publicKeyBytes,
+        privateKeyBytes,
+        ciphertextBytes,
+        sharedSecretBytes,
 
         keypair: async () => {
             const release = await bindingCallerMutex.lock();
-            return initiated.then(async () => {
-                const publicKeyBuffer = Module._malloc(publicKeyBytes);
-                const privateKeyBuffer = Module._malloc(privateKeyBytes);
 
-                try {
-                    const returnValue = await Module.ccall(
-                        'kem_keypair',
-                        'number',
-                        ['number', 'number'],
-                        [publicKeyBuffer, privateKeyBuffer],
-                        { async: true }
-                    );
-                    return dataReturn(returnValue, {
-                        publicKey: dataResult(publicKeyBuffer, publicKeyBytes),
-                        privateKey: dataResult(privateKeyBuffer, privateKeyBytes),
-                    });
-                } finally {
-                    release();
-                    dataFree(publicKeyBuffer);
-                    dataFree(privateKeyBuffer);
-                }
-            });
+            const publicKeyBuffer = Module._malloc(publicKeyBytes);
+            const privateKeyBuffer = Module._malloc(privateKeyBytes);
+
+            try {
+                const returnValue: number = await Module.ccall(
+                    'kem_keypair',
+                    'number',
+                    ['number', 'number'],
+                    [publicKeyBuffer, privateKeyBuffer],
+                    { async: true }
+                );
+                return dataReturn(returnValue, {
+                    publicKey: dataResult(publicKeyBuffer, publicKeyBytes),
+                    privateKey: dataResult(privateKeyBuffer, privateKeyBytes),
+                });
+            } finally {
+                release();
+                dataFree(publicKeyBuffer);
+                dataFree(privateKeyBuffer);
+            }
         },
 
         encapsulate: async (publicKey) => {
             const release = await bindingCallerMutex.lock();
-            return initiated.then(async () => {
-                const ciphertextBuffer = Module._malloc(ciphertextBytes);
-                const sharedSecretBuffer = Module._malloc(sharedSecretBytes);
-                const publicKeyBuffer = Module._malloc(publicKeyBytes);
 
-                Module.writeArrayToMemory(publicKey, publicKeyBuffer);
+            const ciphertextBuffer = Module._malloc(ciphertextBytes);
+            const sharedSecretBuffer = Module._malloc(sharedSecretBytes);
+            const publicKeyBuffer = Module._malloc(publicKeyBytes);
 
-                try {
-                    const returnValue = await Module.ccall(
-                        'kem_encapsulate',
-                        'number',
-                        ['number', 'number', 'number'],
-                        [ciphertextBuffer, sharedSecretBuffer, publicKeyBuffer],
-                        { async: true }
-                    );
-                    return dataReturn(returnValue, {
-                        ciphertext: dataResult(ciphertextBuffer, ciphertextBytes),
-                        sharedSecret: dataResult(sharedSecretBuffer, sharedSecretBytes),
-                    });
-                } finally {
-                    release();
-                    dataFree(ciphertextBuffer);
-                    dataFree(sharedSecretBuffer);
-                    dataFree(publicKeyBuffer);
-                }
-            });
+            Module.writeArrayToMemory(publicKey, publicKeyBuffer);
+
+            try {
+                const returnValue: number = await Module.ccall(
+                    'kem_encapsulate',
+                    'number',
+                    ['number', 'number', 'number'],
+                    [ciphertextBuffer, sharedSecretBuffer, publicKeyBuffer],
+                    { async: true }
+                );
+                return dataReturn(returnValue, {
+                    ciphertext: dataResult(ciphertextBuffer, ciphertextBytes),
+                    sharedSecret: dataResult(sharedSecretBuffer, sharedSecretBytes),
+                });
+            } finally {
+                release();
+                dataFree(ciphertextBuffer);
+                dataFree(sharedSecretBuffer);
+                dataFree(publicKeyBuffer);
+            }
         },
 
         decapsulate: async (ciphertext, privateKey) => {
             const release = await bindingCallerMutex.lock();
-            return initiated.then(async () => {
-                const sharedSecretBuffer = Module._malloc(sharedSecretBytes);
-                const ciphertextBuffer = Module._malloc(ciphertextBytes);
-                const privateKeyBuffer = Module._malloc(privateKeyBytes);
 
-                Module.writeArrayToMemory(ciphertext, ciphertextBuffer);
-                Module.writeArrayToMemory(privateKey, privateKeyBuffer);
+            const sharedSecretBuffer = Module._malloc(sharedSecretBytes);
+            const ciphertextBuffer = Module._malloc(ciphertextBytes);
+            const privateKeyBuffer = Module._malloc(privateKeyBytes);
 
-                try {
-                    const returnValue = await Module.ccall(
-                        'kem_decapsulate',
-                        'number',
-                        ['number', 'number', 'number'],
-                        [sharedSecretBuffer, ciphertextBuffer, privateKeyBuffer],
-                        { async: true }
-                    );
-                    return dataReturn(returnValue, {
-                        sharedSecret: dataResult(sharedSecretBuffer, sharedSecretBytes),
-                    });
-                } finally {
-                    release();
-                    dataFree(sharedSecretBuffer);
-                    dataFree(ciphertextBuffer);
-                    dataFree(privateKeyBuffer);
-                }
-            });
+            Module.writeArrayToMemory(ciphertext, ciphertextBuffer);
+            Module.writeArrayToMemory(privateKey, privateKeyBuffer);
+
+            try {
+                const returnValue: number = await Module.ccall(
+                    'kem_decapsulate',
+                    'number',
+                    ['number', 'number', 'number'],
+                    [sharedSecretBuffer, ciphertextBuffer, privateKeyBuffer],
+                    { async: true }
+                );
+                return dataReturn(returnValue, {
+                    sharedSecret: dataResult(sharedSecretBuffer, sharedSecretBytes),
+                });
+            } finally {
+                release();
+                dataFree(sharedSecretBuffer);
+                dataFree(ciphertextBuffer);
+                dataFree(privateKeyBuffer);
+            }
         },
     };
 }
@@ -220,7 +211,7 @@ class Mutex {
 
     lock() {
         let _resolve: () => void;
-        const p = new Promise<void>(resolve => {
+        const p = new Promise<void>((resolve) => {
             _resolve = () => resolve();
         });
         const rv = this.current.then(() => _resolve);

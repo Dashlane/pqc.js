@@ -62,5 +62,16 @@ module.exports = (env) => {
                 },
             ],
         },
+        resolve: {
+            fallback: {
+                "module": false, // Explicitly handle `module` resolution
+                "fs": false,
+                "path": false,
+            },
+            extensions: ['.js', '.json', '.wasm'],  // Ensure webpack resolves these extensions
+        },
+        stats: {
+            errorDetails: true
+        }
     };
 };
